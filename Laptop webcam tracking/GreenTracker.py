@@ -24,7 +24,7 @@ roi_w, roi_h = 320, 240  # Width and height of the ROI
 # Variables to track the previous position of the object
 prev_x, prev_y = None, None
 max_speed = 200  # Maximum allowed speed
-movement_threshold = 5  # Minimum movement threshold to move the cursor
+movement_threshold = 2  # Minimum movement threshold to move the cursor
 
 # Get the initial mouse position
 current_mouse_x, current_mouse_y = win32api.GetCursorPos()
