@@ -8,14 +8,17 @@ import leap
 import time
 import math
 import win32api, win32con
+import SerialComms
 
 class MyListener(leap.Listener):
     def __init__(self):
         self.handpos = [0, 0, 0]
         self.handid = ""
+        self.pauseMove = False
 
     def move(self, prevPos, newPos):
-        win32api.mouse_event(win32con.MOUSEEVENTF_MOVE, int(4 * (newPos[0] - prevPos[0])), int(4 * (-(newPos[1] - prevPos[1]))), 0, 0)
+        if self.pauseMove == False:
+            win32api.mouse_event(win32con.MOUSEEVENTF_MOVE, int(4 * (newPos[0] - prevPos[0])), int(4 * (-(newPos[1] - prevPos[1]))), 0, 0)
 
     def on_connection_event(self, event):
         print("Connected")
@@ -67,6 +70,8 @@ class MyListener(leap.Listener):
 def main():
     my_listener = MyListener()
 
+    serialReader = SerialComms.SerialReader(port = "COM6", baudrate = 9600, timeout = .1)
+
     connection = leap.Connection()
     connection.add_listener(my_listener)
 
@@ -75,8 +80,23 @@ def main():
     with connection.open():
         connection.set_tracking_mode(leap.TrackingMode.Desktop)
         while running:
-            print(my_listener.handpos)
-            time.sleep(0.1)
+            buttonStates = serialReader.formatRead()
+
+            try:
+                if buttonStates[0] == "1":
+                    my_listener.pauseMove = True
+                else:
+                    my_listener.pauseMove = False
+
+                if buttonStates[1] == "1":
+                    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
+                else:
+                    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
+            except Exception as e:
+                print(f'Caught exception while interpreting serial output\n{e}')
+
+
+            print(f'Handpos: {my_listener.handpos}\nButton status: {buttonStates}')
 
 
 if __name__ == "__main__":
